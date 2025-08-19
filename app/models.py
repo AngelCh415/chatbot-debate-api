@@ -14,6 +14,11 @@ class ChatRequest(BaseModel):
         default=None, description="Existing conversation id or null to start"
     )
     message: str = Field(..., min_length=1, max_length=2000)
+    topic: str | None = Field(
+        default=None,
+        description="Optional user-provided debate topic for a new conversation",
+        max_length=200,
+    )
 
 
 class Message(BaseModel):
