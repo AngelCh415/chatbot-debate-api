@@ -52,6 +52,9 @@ def new_topic_and_stance(
     """
     if topic_hint:
         topic = topic_hint.strip()
+        # Add the topic to the pool if it's new
+        if topic not in TOPICS:
+            TOPICS.append(topic)
     else:
         random.seed(seed)
         topic = random.choice(TOPICS)
