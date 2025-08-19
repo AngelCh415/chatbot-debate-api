@@ -10,7 +10,7 @@ from .models import ChatRequest, ChatResponse, Message
 from .service import (
     extract_topic_from_text,
     generate_placeholder_reply,
-    new_topic_and_stance,
+    parse_topic_and_stance,
 )
 from .store import ConversationState, MemoryStore, trim_history
 
@@ -38,14 +38,12 @@ def chat(req: ChatRequest) -> ChatResponse:
         if topic_hint is None:
             topic_hint = extract_topic_from_text(req.message)
 
-        topic, stance, thesis = new_topic_and_stance(
-            topic_hint=topic_hint, seed=req.message
-        )
+        topic, stance, thesis = parse_topic_and_stance(req.message)
         state = ConversationState(topic=topic, stance=stance, thesis=thesis)
         store.set(cid, state)
     else:
         cid = req.conversation_id
-        conv = store.get(cid)  # tipo: ConversationState | None
+        conv = store.get(cid)
         if conv is None:
             raise HTTPException(status_code=404, detail="Conversation not found.")
         state = conv
