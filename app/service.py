@@ -2,18 +2,7 @@
 
 from __future__ import annotations
 
-import random
 import re
-
-# List of predefined debate topics
-# This can be expanded or modified as needed.
-# Topics should be concise and suitable for a debate format.
-TOPICS = [
-    "The Earth is flat",
-    "Pineapple belongs on pizza",
-    "Remote work is better than office work",
-    "Artificial intelligence will improve society",
-]
 
 
 def extract_topic_from_text(text: str) -> str | None:
@@ -38,30 +27,52 @@ def extract_topic_from_text(text: str) -> str | None:
     return None
 
 
-def new_topic_and_stance(
-    topic_hint: str | None = None, seed: str | None = None
-) -> tuple[str, str, str]:
-    """Choose a topic and a stance (pro|con) with a concise thesis.
+def parse_topic_and_stance(first_message: str) -> tuple[str, str, str]:
+    """Infer topic, stance and thesis from the user's first free-form message.
+
+    Heurísticas simples (no LLM):
+      - "explain why X is better than Y"
+      - "argue against X" / "why X is wrong"
+      - Fallback -> topic = first_message, stance = "unknown", thesis = first_message
 
     Args:
-        topic_hint: Optional explicit topic from the user.
-        seed: Optional seed for deterministic choice when hint is missing.
+        first_message: Raw first user message.
 
     Returns:
         (topic, stance, thesis)
     """
-    if topic_hint:
-        topic = topic_hint.strip()
-        # Add the topic to the pool if it's new
-        if topic not in TOPICS:
-            TOPICS.append(topic)
-    else:
-        random.seed(seed)
-        topic = random.choice(TOPICS)
+    text = first_message.strip()
 
-    stance = random.choice(["pro", "con"])
-    thesis = f"I take the {stance} position on: {topic}."
-    return topic, stance, thesis
+    # Pattern: "... why X is better than Y"
+    m = re.search(r"why\s+(.+?)\s+is\s+better\s+than\s+(.+)", text, flags=re.I)
+    if m:
+        x = m.group(1).strip()
+        y = m.group(2).strip().rstrip(".!?")
+        topic = f"{x} vs {y}"
+        stance = f"pro {x}"
+        thesis = f"{x} is better than {y}"
+        return topic, stance, thesis
+
+    # Pattern: "argue against X" / "debate against X"
+    m = re.search(r"(argue|debate|explain)\s+against\s+(.+)", text, flags=re.I)
+    if m:
+        x = m.group(2).strip().rstrip(".!?")
+        topic = x
+        stance = f"con {x}"
+        thesis = f"{x} is not correct"
+        return topic, stance, thesis
+
+    # Pattern: "why X is wrong"
+    m = re.search(r"why\s+(.+?)\s+is\s+wrong", text, flags=re.I)
+    if m:
+        x = m.group(1).strip().rstrip(".!?")
+        topic = x
+        stance = f"con {x}"
+        thesis = f"{x} is wrong"
+        return topic, stance, thesis
+
+    # Fallback: use the whole message as thesis/topic
+    return text, "unknown", text
 
 
 def generate_placeholder_reply(
