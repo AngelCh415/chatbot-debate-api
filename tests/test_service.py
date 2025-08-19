@@ -1,10 +1,28 @@
 """Unit tests for service functions."""
 
+from fastapi.testclient import TestClient
+
 from app.service import (
     extract_topic_from_text,
     generate_placeholder_reply,
-    new_topic_and_stance,
+    parse_topic_and_stance,
 )
+
+
+def test_first_message_defines_topic_and_stance(client: TestClient) -> None:
+    """Test that the first message defines the topic and stance."""
+    r = client.post(
+        "/chat",
+        json={
+            "conversation_id": None,
+            "message": "explain why Pepsi is better than Coke",
+        },
+    )
+    assert r.status_code == 200
+    body = r.json()
+    text = " ".join(m["message"].lower() for m in body["message"])
+    # Debe reflejar la tesis "pepsi is better than coke"
+    assert "pepsi is better than coke" in text
 
 
 def test_extract_topic_from_text_handles_prefix() -> None:
@@ -19,12 +37,13 @@ def test_extract_topic_from_text_short_fallback() -> None:
     assert t == "remote work"
 
 
-def test_new_topic_and_stance_with_explicit_topic() -> None:
-    """Tests a new topic and stance can be generated with an explicit topic hint."""
-    topic, stance, thesis = new_topic_and_stance(topic_hint="pineapple on pizza")
-    assert "pineapple" in topic
-    assert stance in {"pro", "con"}
-    assert "I take the" in thesis
+def test_parse_topic_and_stance_fallback() -> None:
+    """If no pattern matches, the whole message should be used as fallback."""
+    msg = "Let's debate about remote work in general"
+    topic, stance, thesis = parse_topic_and_stance(msg)
+    assert topic == msg
+    assert stance == "unknown"
+    assert thesis == msg
 
 
 def test_generate_placeholder_reply_mentions_thesis() -> None:

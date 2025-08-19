@@ -19,19 +19,19 @@ def test_chat_requires_non_empty_message(client: TestClient) -> None:
     assert resp.json()["detail"] == "Message cannot be empty."
 
 
-def test_chat_explicit_topic_in_request(client: TestClient) -> None:
-    """Test that providing an explicit topic in the request is used."""
+def test_first_message_defines_topic_from_free_text(client: TestClient) -> None:
+    """Topic and stance should be inferred from the user's first free-form message."""
     resp = client.post(
         "/chat",
         json={
             "conversation_id": None,
-            "topic": "nuclear energy",
-            "message": "go",
+            "message": "explain why nuclear energy is better than fossil fuels",
         },
     )
     assert resp.status_code == 200
-    text = " ".join(m["message"].lower() for m in resp.json()["message"])
-    assert "nuclear energy" in text
+    body = resp.json()
+    text = " ".join(m["message"].lower() for m in body["message"])
+    assert "nuclear energy is better than fossil fuels" in text
 
 
 def test_chat_infers_topic_from_first_message(client: TestClient) -> None:
