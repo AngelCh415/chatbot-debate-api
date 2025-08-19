@@ -1,10 +1,14 @@
-.PHONY: help install run test clean
+.PHONY: help install run test clean lint format typecheck checks
 
 help:
-	@echo "make install - install dependencies"
-	@echo "make run - run the API locally"
-	@echo "make test - run tests"
-	@echo "make clean - clean up"
+	@echo "make install   - install dependencies"
+	@echo "make run       - run the API locally"
+	@echo "make test      - run tests"
+	@echo "make lint      - ruff lint (auto-fix)"
+	@echo "make format    - black format"
+	@echo "make typecheck - mypy type checking"
+	@echo "make checks    - format + lint + typecheck"
+	@echo "make clean     - remove caches"
 
 install:
 	poetry install
@@ -15,7 +19,17 @@ run:
 test:
 	poetry run pytest -v
 
+lint:
+	poetry run ruff check . --fix
+
+format:
+	poetry run black .
+
+typecheck:
+	poetry run mypy app tests
+
+checks: format lint typecheck
+
 clean:
-	# Borra caches de Python en todo el proyecto
 	find . -type d -name "__pycache__" -exec rm -rf {} +
-	rm -rf .pytest_cache .mypy_cache
+	rm -rf .pytest_cache .mypy_cache .ruff_cache

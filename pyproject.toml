@@ -19,3 +19,62 @@ dependencies = [
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.12.9"
+black = "^25.1.0"
+mypy = "^1.17.1"
+pre-commit = "^4.3.0"
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+exclude = '''
+/(
+    \.venv
+  | venv
+  | build
+  | dist
+  | __pycache__
+)/
+'''
+
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+# Selecciones comunes + docstrings (D)
+select = [
+  "E", "F", "I",  # pycodestyle/pyflakes + isort(imports)
+  "B",            # bugbear
+  "UP",           # pyupgrade
+  "D"             # pydocstyle (docstrings)
+]
+ignore = [
+  "D104", # missing docstring in package __init__
+  "D107"  # missing docstring in __init__ (métodos dunder)
+]
+# Activa el orden de imports vía isort interno
+[tool.ruff.lint.isort]
+known-first-party = ["chatbot_debate_api"]
+combine-as-imports = true
+
+# Estilo de docstring (Google o NumPy). Elige uno:
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+# convention = "numpy"
+
+# Formateo vía Ruff (solo para reglas que no chocan con Black)
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+disallow_untyped_defs = true
+warn_unused_ignores = true
+no_implicit_optional = true
+pretty = true
+
+
