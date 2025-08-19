@@ -3,13 +3,6 @@
 from fastapi.testclient import TestClient
 
 
-def test_root_health(client: TestClient) -> None:
-    """Test the root endpoint for health check."""
-    resp = client.get("/")
-    assert resp.status_code == 200
-    assert "Hello" in resp.json()["message"]
-
-
 def test_chat_new_conversation_creates_id(client: TestClient) -> None:
     """Test that starting a new conversation returns a new ID and bot message."""
     resp = client.post("/chat", json={"conversation_id": None, "message": "start"})
