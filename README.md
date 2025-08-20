@@ -53,6 +53,81 @@ La API quedará disponible en:
 
 http://127.0.0.1:8000
 ```
+## 📡 Endpoints principales
+```bash
+GET /
+
+Verificación de salud.
+
+Ejemplo (curl):
+
+curl -s http://127.0.0.1:8000/
+
+
+Posible respuesta:
+
+{ "status": "ok", "message": "Chatbot Debate API is running" }
+```
+```bash
+
+POST /chat
+
+Inicia o continúa una conversación de debate.
+
+Si no envías conversation_id, se crea uno nuevo.
+
+El bot se mantiene en el tema original y no cambia de postura.
+
+El historial retorna hasta 5 mensajes por lado (más recientes al final).
+
+Request (iniciar):
+
+curl -X POST http://127.0.0.1:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "conversation_id": null,
+    "message": "I think the Earth is flat"
+  }'
+
+
+Respuesta (ejemplo):
+
+{
+  "conversation_id": "82f0151d-...-239e3e26835d",
+  "message": [
+    { "role": "user", "message": "I think the Earth is flat" },
+    { "role": "bot",  "message": "I strongly disagree with the notion that the Earth is flat. Scientific evidence..." }
+  ]
+}
+
+
+Request (continuar):
+
+curl -X POST http://127.0.0.1:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "conversation_id": "82f0151d-...-239e3e26835d",
+    "message": "Yes, but I dont see the curvature on the earth"
+  }'
+  ```
+
+## 🧪 Pruebas y cobertura
+```bash
+
+Tests unitarios:
+
+make test
+```
+```bash
+
+Cobertura (mínimo 80% + reporte HTML opcional):
+
+make test-cov
+make cov-html   # abre ./htmlcov/index.html
+
+
+Durante los tests forzamos USE_AI=false para no llamar a la red.
+```
 
 ## 🧰 Makefile (atajos útiles)
 
