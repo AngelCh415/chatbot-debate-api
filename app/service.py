@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 
+from .llm import LLMClient
 from .models import Message
 
 _STOPWORDS = {
@@ -229,3 +230,28 @@ def generate_cohesive_reply(
 
     # Default to template A
     return template_a.replace("{claim}", claim)
+
+
+def generate_ai_reply(
+    user_text: str,
+    topic: str,
+    stance: str,
+    thesis: str,
+    recent_history: list[Message] | None = None,
+) -> str:
+    """Use ChatGPT to produce a persuasive, cohesive reply anchored to the thesis."""
+    system_prompt = (
+        "You are a debate assistant. Your job is to argue"
+        " persuasively while staying on the"
+        " original topic and maintaining the same stance throughout the conversation.\n"
+        f"- Topic: {topic}\n"
+        f"- Stance: {stance}\n"
+        f"- Thesis: {thesis}\n"
+        "Rules:\n"
+        "1) Stay on topic. If the user drifts, politely steer back to the thesis.\n"
+        "2) Be persuasive and civil, not aggressive.\n"
+        "3) Keep answers concise.\n"
+        "4) Do not switch stance.\n"
+    )
+    client = LLMClient()
+    return client.generate(system_prompt, recent_history or [], user_text)
