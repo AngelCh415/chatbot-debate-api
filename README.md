@@ -66,6 +66,8 @@ curl -s http://127.0.0.1:8000/
 Posible respuesta:
 
 { "status": "ok", "message": "Chatbot Debate API is running" }
+
+
 POST /chat
 
 Inicia o continúa una conversación de debate.
