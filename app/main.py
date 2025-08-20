@@ -9,7 +9,7 @@ from fastapi import FastAPI, HTTPException
 from .models import ChatRequest, ChatResponse, Message
 from .service import (
     extract_topic_from_text,
-    generate_placeholder_reply,
+    generate_cohesive_reply,
     parse_topic_and_stance,
 )
 from .store import ConversationState, MemoryStore, trim_history
@@ -51,12 +51,13 @@ def chat(req: ChatRequest) -> ChatResponse:
     # Append user message
     state.history.append(Message(role="user", message=req.message))
 
-    # Generate bot reply (placeholder v1)
-    bot_text = generate_placeholder_reply(
+    # Generate bot reply (cohesive v2)
+    bot_text = generate_cohesive_reply(
         user_text=req.message,
         topic=state.topic,
         stance=state.stance,
         thesis=state.thesis,
+        recent_history=list(state.history),
     )
     state.history.append(Message(role="bot", message=bot_text))
 
