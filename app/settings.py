@@ -6,6 +6,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     """App settings."""
 
+    DEBUG: bool = True  # Only in local development
+
     # Feature flag: use AI or not, default: False
     USE_AI: bool = False
 

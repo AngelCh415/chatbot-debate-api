@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import uuid
 
 from fastapi import FastAPI, HTTPException
@@ -18,6 +19,12 @@ from .store import ConversationState, MemoryStore, trim_history
 
 app = FastAPI(title="Chatbot Debate API")
 store = MemoryStore()
+
+logging.getLogger("uvicorn.error").info(
+    f"MODE={'AI' if settings.USE_AI else 'MOCK'} MODEL={
+        settings.OPENAI_MODEL} KEY_PRESENT={bool(settings.OPENAI_API_KEY)
+        }"
+)
 
 
 @app.post("/chat", response_model=ChatResponse, summary="Chat entrypoint")

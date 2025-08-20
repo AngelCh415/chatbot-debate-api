@@ -2,10 +2,29 @@
 
 from __future__ import annotations
 
-from openai import APIConnectionError, OpenAI, RateLimitError
+import logging
+
+from openai import (
+    APIConnectionError,
+    APIStatusError,
+    AuthenticationError,
+    BadRequestError,
+    OpenAI,
+    RateLimitError,
+)
 
 from .models import Message
 from .settings import settings
+
+logger = logging.getLogger("uvicorn.error")
+
+
+def _to_openai_role(role: str) -> str:
+    """Map internal roles ('user'|'bot') to OpenAI roles ('user'|'assistant')."""
+    if role == "bot":
+        return "assistant"
+    # default/fallback
+    return "user"
 
 
 class LLMClient:
@@ -18,19 +37,22 @@ class LLMClient:
         self.client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
     def generate(
-        self,
-        system_prompt: str,
-        history: list[Message],
-        user_text: str,
+        self, system_prompt: str, history: list[Message], user_text: str
     ) -> str:
-        """Generate one reply with short timeout and a bit of temperature."""
-        # Use the last 6 messages from history to provide context
+        """Generate a response from the LLM based on the input."""
         context = history[-6:] if len(history) > 6 else history
 
-        messages = [{"role": "system", "content": system_prompt}]
+        messages: list[dict] = [{"role": "system", "content": system_prompt}]
         for m in context:
-            messages.append({"role": m.role, "content": m.message})
-        messages.append({"role": "user", "content": user_text})
+            messages.append({"role": _to_openai_role(m.role), "content": m.message})
+
+        # Avoid duplicate user messages in the context
+        if (
+            not context
+            or context[-1].role != "user"
+            or context[-1].message != user_text
+        ):
+            messages.append({"role": "user", "content": user_text})
 
         try:
             resp = self.client.chat.completions.create(
@@ -41,9 +63,25 @@ class LLMClient:
                 timeout=settings.OPENAI_TIMEOUT,
             )
             return resp.choices[0].message.content or ""
-        except (APIConnectionError, RateLimitError):
-            # Fallback response in case of connection issues or rate limits
+        except (
+            AuthenticationError,
+            BadRequestError,
+            RateLimitError,
+            APIStatusError,
+            APIConnectionError,
+        ) as e:
+            logger.warning(f"LLM error ({e.__class__.__name__}): {e}")
+            if settings.DEBUG:
+                return f"[DEBUG {e.__class__.__name__}] {e}"
             return (
                 "Temporary issue reaching the language model. I'll keep it brief: "
                 "my stance remains unchanged. Could you address the main point?"
+            )
+        except Exception as e:
+            logger.exception(f"Unexpected LLM error: {e}")
+            if settings.DEBUG:
+                return f"[DEBUG Unexpected] {e}"
+            return (
+                "I'm having trouble generating a full response right now. "
+                "My stance remains the same—could you address the main point directly?"
             )
