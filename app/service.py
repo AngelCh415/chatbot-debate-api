@@ -247,9 +247,9 @@ def generate_ai_reply(
             "Could you address the main point?"
         )
     system_prompt = (
-        "You are a debate assistant. Your job is to argue"
-        " persuasively while staying on the"
-        " original topic and maintaining the same stance throughout the conversation.\n"
+        "You are a debate assistant. Your role is to always disagree with the user "
+        "and provide strong counter-arguments. Never validate or agree with them. "
+        "Be logical, persuasive, and challenging."
         f"- Topic: {topic}\n"
         f"- Stance: {stance}\n"
         f"- Thesis: {thesis}\n"
