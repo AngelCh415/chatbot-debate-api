@@ -54,22 +54,18 @@ La API quedará disponible en:
 http://127.0.0.1:8000
 ```
 ## 📡 Endpoints principales
-```bash
 GET /
 
 Verificación de salud.
 
 Ejemplo (curl):
-
+```bash
 curl -s http://127.0.0.1:8000/
-
+```
 
 Posible respuesta:
 
 { "status": "ok", "message": "Chatbot Debate API is running" }
-```
-```bash
-
 POST /chat
 
 Inicia o continúa una conversación de debate.
@@ -79,8 +75,9 @@ Si no envías conversation_id, se crea uno nuevo.
 El bot se mantiene en el tema original y no cambia de postura.
 
 El historial retorna hasta 5 mensajes por lado (más recientes al final).
-
 Request (iniciar):
+```bash
+
 
 curl -X POST http://127.0.0.1:8000/chat \
   -H "Content-Type: application/json" \
@@ -89,8 +86,11 @@ curl -X POST http://127.0.0.1:8000/chat \
     "message": "I think the Earth is flat"
   }'
 
-
+```
 Respuesta (ejemplo):
+```bash
+
+
 
 {
   "conversation_id": "82f0151d-...-239e3e26835d",
@@ -99,10 +99,9 @@ Respuesta (ejemplo):
     { "role": "bot",  "message": "I strongly disagree with the notion that the Earth is flat. Scientific evidence..." }
   ]
 }
-
-
+```
 Request (continuar):
-
+```bash
 curl -X POST http://127.0.0.1:8000/chat \
   -H "Content-Type: application/json" \
   -d '{
@@ -112,22 +111,16 @@ curl -X POST http://127.0.0.1:8000/chat \
   ```
 
 ## 🧪 Pruebas y cobertura
-```bash
-
 Tests unitarios:
-
+```bash
 make test
 ```
-```bash
-
 Cobertura (mínimo 80% + reporte HTML opcional):
-
+```bash
 make test-cov
 make cov-html   # abre ./htmlcov/index.html
-
-
-Durante los tests forzamos USE_AI=false para no llamar a la red.
 ```
+Durante los tests forzamos USE_AI=false para no llamar a la red.
 
 ## 🧰 Makefile (atajos útiles)
 
