@@ -73,3 +73,21 @@ def test_nonexistent_conversation_returns_404(client: TestClient) -> None:
     )
     assert resp.status_code == 404
     assert resp.json()["detail"] == "Conversation not found."
+
+
+def test_chat_reconduces_when_off_topic(client: TestClient) -> None:
+    """Test that the bot redirects off-topic messages back to the topic."""
+    r = client.post(
+        "/chat",
+        json={
+            "conversation_id": None,
+            "message": "explain why Pepsi is better than Coke",
+        },
+    )
+    cid = r.json()["conversation_id"]
+
+    r2 = client.post(
+        "/chat", json={"conversation_id": cid, "message": "what is your name?"}
+    )
+    txt = " ".join(m["message"] for m in r2.json()["message"])
+    assert "Let's stay on topic" in txt

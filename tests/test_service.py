@@ -2,8 +2,10 @@
 
 from fastapi.testclient import TestClient
 
+from app.models import Message
 from app.service import (
     extract_topic_from_text,
+    generate_cohesive_reply,
     generate_placeholder_reply,
     parse_topic_and_stance,
 )
@@ -56,3 +58,52 @@ def test_generate_placeholder_reply_mentions_thesis() -> None:
     )
     assert "My stance remains:" in reply
     assert "remote work" in reply or "stance" in reply
+
+
+def test_generate_cohesive_reply_always_includes_thesis() -> None:
+    """Tests that the cohesive reply always includes the thesis."""
+    _, _, thesis = parse_topic_and_stance("explain why Pepsi is better than Coke")
+    reply = generate_cohesive_reply(
+        user_text="ok, but why?",
+        topic="Pepsi vs Coke",
+        stance="pro Pepsi",
+        thesis=thesis,
+        recent_history=[],
+    )
+    assert "My stance remains:" in reply
+    assert "Pepsi is better than Coke".lower() in reply.lower()
+
+
+def test_generate_cohesive_reply_reconduces_off_topic() -> None:
+    """Tests that the bot redirects off-topic messages back to the topic."""
+    topic, stance, thesis = ("Pepsi vs Coke", "pro Pepsi", "Pepsi is better than Coke")
+    reply = generate_cohesive_reply(
+        user_text="what's your name?",
+        topic=topic,
+        stance=stance,
+        thesis=thesis,
+        recent_history=[],
+    )
+    assert "Let's stay on topic" in reply
+
+
+def test_generate_cohesive_reply_varies_template() -> None:
+    """Tests that the cohesive reply varies its template to avoid repetition."""
+    topic, stance, thesis = ("Pepsi vs Coke", "pro Pepsi", "Pepsi is better than Coke")
+    hist = [
+        Message(role="user", message="why?"),
+        Message(
+            role="bot",
+            message="I see your point. My stance remains: Pepsi is better than Coke."
+            " One key reason is practical evidence from comparable cases."
+            " Can you challenge that with a concrete counterexample?",
+        ),
+    ]
+    r2 = generate_cohesive_reply(
+        user_text="still not convinced",
+        topic=topic,
+        stance=stance,
+        thesis=thesis,
+        recent_history=hist,
+    )
+    assert "trade-off" in r2.lower()
