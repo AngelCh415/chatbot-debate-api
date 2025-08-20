@@ -42,3 +42,11 @@ test-cov:
 cov-html:
 	poetry run pytest --cov=app --cov-report=html
 	@echo "Open ./htmlcov/index.html in your browser"
+	
+run-ai:
+	USE_AI=true poetry run uvicorn app.main:app --reload --port 8000
+
+env-example:
+	@cp -n .env.sample .env || true
+	@echo "Created .env (if not existed). Update OPENAI_API_KEY before run-ai."
+

@@ -45,3 +45,6 @@ htmlcov/
 # Coverage reports
 .coverage
 htmlcov/
+
+# env files
+.env
