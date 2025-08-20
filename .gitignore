@@ -41,3 +41,7 @@ htmlcov/
 # Docker
 *.pid
 *.log
+
+# Coverage reports
+.coverage
+htmlcov/

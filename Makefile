@@ -33,3 +33,12 @@ checks: format lint typecheck
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	rm -rf .pytest_cache .mypy_cache .ruff_cache
+
+.PHONY: test-cov cov-html
+
+test-cov:
+	poetry run pytest -v --cov=app --cov-report=term-missing --cov-fail-under=80
+
+cov-html:
+	poetry run pytest --cov=app --cov-report=html
+	@echo "Open ./htmlcov/index.html in your browser"
