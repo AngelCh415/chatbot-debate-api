@@ -6,6 +6,7 @@ import re
 
 from .llm import LLMClient
 from .models import Message
+from .settings import settings
 
 _STOPWORDS = {
     "the",
@@ -240,6 +241,11 @@ def generate_ai_reply(
     recent_history: list[Message] | None = None,
 ) -> str:
     """Use ChatGPT to produce a persuasive, cohesive reply anchored to the thesis."""
+    if not settings.OPENAI_API_KEY:
+        return (
+            "AI is temporarily unavailable. My stance remains the same. "
+            "Could you address the main point?"
+        )
     system_prompt = (
         "You are a debate assistant. Your job is to argue"
         " persuasively while staying on the"

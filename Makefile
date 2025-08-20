@@ -17,7 +17,11 @@ run:
 	poetry run uvicorn app.main:app --reload --port 8000
 
 test:
-	poetry run pytest -v
+	USE_AI=false poetry run pytest -v
+
+test-cov:
+	USE_AI=false poetry run pytest -v --cov=app --cov-report=term-missing --cov-fail-under=80
+
 
 lint:
 	poetry run ruff check . --fix
@@ -42,7 +46,7 @@ test-cov:
 cov-html:
 	poetry run pytest --cov=app --cov-report=html
 	@echo "Open ./htmlcov/index.html in your browser"
-	
+
 run-ai:
 	USE_AI=true poetry run uvicorn app.main:app --reload --port 8000
 
