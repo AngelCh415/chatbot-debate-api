@@ -146,8 +146,7 @@ make checks     # run black + ruff + mypy
 make test       # run pytest
 make test-cov   # pytest with minimum 80% coverage
 make cov-html   # generate HTML coverage report
-make run        # start the API in mock mode with docker (no OpenAI)
-make run-ai     # start the API in AI mode with docker (requires OPENAI_API_KEY)
+make run        # start the API with AI mode with docker
 make down       # stop Docker containers
 make clean      # remove caches and temporary containers
 
