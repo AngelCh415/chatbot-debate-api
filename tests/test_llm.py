@@ -94,3 +94,13 @@ def test_roles_mapped_to_openai(monkeypatch: MonkeyPatch) -> None:
     assert msgs[1]["role"] == "user"
     assert msgs[2]["role"] == "assistant"
     assert msgs[-1]["role"] == "user"
+
+
+def test_backoff_retries_and_succeeds(monkeypatch: MonkeyPatch) -> None:
+    """Test that the LLMClient retries on failure and eventually succeeds."""
+    monkeypatch.setattr(llm_mod.time, "sleep", lambda s: None)
+    monkeypatch.setattr(llm_mod, "OpenAI", lambda api_key=None: _DummyOpenAI())
+
+    client = llm_mod.LLMClient()
+    out = client.generate("sys", [Message(role="user", message="hi")], "next")
+    assert out == "ok"
