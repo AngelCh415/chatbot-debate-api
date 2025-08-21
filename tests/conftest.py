@@ -1,24 +1,22 @@
-"""Conftest for pytest."""
+"""pytest configuration for the chatbot debate API tests."""
+
+from __future__ import annotations
+
+import os
 
 import pytest
 from fastapi.testclient import TestClient
 from pytest import MonkeyPatch
 
-from app.core.settings import Settings as settings
-from app.core.store import MemoryStore as store
-from app.main import app
+os.environ.setdefault("USE_AI", "false")
+os.environ.setdefault("OPENAI_API_KEY", "dummy-key")
+
+from app.main import app  # noqa: E402
 
 
-@pytest.fixture(autouse=True)
-def _force_mock_ai() -> None:
-    """Force mock AI for all tests."""
-    settings.USE_AI = False
-
-
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def client() -> TestClient:
-    """Fixture to create a test client for FastAPI."""
-    store._data.clear()
+    """Create a FastAPI test client for the application."""
     return TestClient(app)
 
 
@@ -26,10 +24,3 @@ def client() -> TestClient:
 def fake_openai_key(monkeypatch: MonkeyPatch) -> None:
     """Set a fake OpenAI API key for tests."""
     monkeypatch.setenv("OPENAI_API_KEY", "test")
-
-
-@pytest.fixture(autouse=True)
-def _fake_openai_env(monkeypatch: MonkeyPatch) -> None:
-    """Ensure a fake OpenAI API key is set for tests."""
-    monkeypatch.setenv("OPENAI_API_KEY", "test")
-    settings.OPENAI_API_KEY = "test"

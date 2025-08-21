@@ -6,8 +6,7 @@ import re
 
 from app.core.settings import settings
 from app.models.chat import Message
-
-from .llm import LLMClient
+from app.services.llm import LLMClient
 
 _STOPWORDS = frozenset(
     {

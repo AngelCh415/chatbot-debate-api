@@ -54,7 +54,6 @@ def _with_backoff(fn: Callable[[], T], *, tries: int = 3) -> T:
     return fn()
 
 
-# helpers tipados (colócalos cerca de LLMClient o arriba)
 def _sys_msg(content: str) -> ChatCompletionSystemMessageParam:
     """Create a system message for OpenAI ChatCompletion."""
     return {"role": "system", "content": content}
