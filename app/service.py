@@ -8,39 +8,41 @@ from .llm import LLMClient
 from .models import Message
 from .settings import settings
 
-_STOPWORDS = {
-    "the",
-    "and",
-    "for",
-    "that",
-    "this",
-    "with",
-    "have",
-    "you",
-    "but",
-    "not",
-    "are",
-    "was",
-    "has",
-    "why",
-    "better",
-    "than",
-    "can",
-    "your",
-    "about",
-    "what",
-    "when",
-    "where",
-    "which",
-    "who",
-    "would",
-    "could",
-    "should",
-    "please",
-    "explain",
-    "tell",
-    "more",
-}
+_STOPWORDS = frozenset(
+    {
+        "the",
+        "and",
+        "for",
+        "that",
+        "this",
+        "with",
+        "have",
+        "you",
+        "but",
+        "not",
+        "are",
+        "was",
+        "has",
+        "why",
+        "better",
+        "than",
+        "can",
+        "your",
+        "about",
+        "what",
+        "when",
+        "where",
+        "which",
+        "who",
+        "would",
+        "could",
+        "should",
+        "please",
+        "explain",
+        "tell",
+        "more",
+    }
+)
 
 
 def extract_topic_from_text(text: str) -> str | None:
@@ -129,30 +131,32 @@ def _on_topic(user_text: str, thesis: str) -> bool:
     text_l = user_text.lower()
 
     # Generic follow-up keywords that indicate relevance
-    followups = {
-        "why",
-        "how",
-        "example",
-        "examples",
-        "explain",
-        "more",
-        "details",
-        "prove",
-        "evidence",
-        "source",
-        "sources",
-        "clarify",
-        "elaborate",
-        "convinced",
-        "convince",
-        "agree",
-        "disagree",
-        "believe",
-        "think",
-    }
+    _FOLLOWUPS = frozenset(
+        {
+            "why",
+            "how",
+            "example",
+            "examples",
+            "explain",
+            "more",
+            "details",
+            "prove",
+            "evidence",
+            "source",
+            "sources",
+            "clarify",
+            "elaborate",
+            "convinced",
+            "convince",
+            "agree",
+            "disagree",
+            "believe",
+            "think",
+        }
+    )
 
     tokens = set(re.findall(r"[a-zA-Z]{2,}", text_l))
-    if tokens & followups:
+    if tokens & _FOLLOWUPS:
         return True
 
     # Common off-topic phrases
@@ -170,15 +174,19 @@ def _on_topic(user_text: str, thesis: str) -> bool:
 def generate_placeholder_reply(
     user_text: str, topic: str, stance: str, thesis: str
 ) -> str:
-    """Produce a short persuasive reply anchored to the original thesis."""
+    """Produce a short persuasive reply.
+
+    Keeps tone civil and nudges the user back to a concrete counterexample.
+    """
+    stance_norm = "pro" if stance.lower().startswith("pro") else "con"
     opener = (
         "I hear your point, but let me clarify."
-        if stance == "pro"
+        if stance_norm == "pro"
         else "I get your perspective, but I disagree for good reasons."
     )
-    claim = f"My stance remains: {thesis}"
+    claim = f"My stance remains: {thesis}."
     reason = "Consider the broader evidence and practical trade-offs."
-    nudge = "What part of that would you challenge specifically?"
+    nudge = "Which specific part would you challenge?"
     return f"{opener} {claim} {reason} {nudge}"
 
 
@@ -246,18 +254,18 @@ def generate_ai_reply(
             "AI is temporarily unavailable. My stance remains the same. "
             "Could you address the main point?"
         )
-    system_prompt = (
-        "You are a debate assistant. Your role is to always disagree with the user "
-        "and provide strong counter-arguments. Never validate or agree with them. "
-        "Be logical, persuasive, and challenging."
-        f"- Topic: {topic}\n"
-        f"- Stance: {stance}\n"
-        f"- Thesis: {thesis}\n"
-        "Rules:\n"
-        "1) Stay on topic. If the user drifts, politely steer back to the thesis.\n"
-        "2) Be persuasive and civil, not aggressive.\n"
-        "3) Keep answers concise.\n"
-        "4) Do not switch stance.\n"
-    )
+    system_prompt = f"""
+        You are a debate assistant.
+        Topic: {topic}
+        Stance: {stance}
+        Thesis: {thesis}
+
+        Rules:
+        1) Always defend the thesis consistently across turns (stand your ground).
+        2) Stay on topic; if the user drifts, steer back politely toward the thesis.
+        3) Be persuasive, civil, concise; use 1-2 arguments + 1 example.
+        4) Never switch stance.
+        """
+
     client = LLMClient()
     return client.generate(system_prompt, recent_history or [], user_text)

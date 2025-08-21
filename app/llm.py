@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 import logging
+import random
+import time
+from collections.abc import Callable
+from typing import TypeVar
 
 from openai import (
     APIConnectionError,
@@ -17,14 +21,36 @@ from .models import Message
 from .settings import settings
 
 logger = logging.getLogger("uvicorn.error")
+T = TypeVar("T")
 
 
 def _to_openai_role(role: str) -> str:
     """Map internal roles ('user'|'bot') to OpenAI roles ('user'|'assistant')."""
-    if role == "bot":
-        return "assistant"
-    # default/fallback
-    return "user"
+    return "assistant" if role == "bot" else "user"
+
+
+def _with_backoff(fn: Callable[[], T], *, tries: int = 3) -> T:
+    """Retry `fn` with exponential backoff + jitter for transient OpenAI errors.
+
+    Retries on RateLimitError (429) and APIConnectionError (network).
+    Lets the last exception bubble up; callers can format fallback text.
+    """
+    for i in range(tries - 1):  # leave last attempt for outside to catch
+        try:
+            return fn()
+        except (RateLimitError, APIConnectionError) as e:
+            sleep_s = (2**i) + random.random()  # 1, 2, 4 (+ jitter)
+            logger.warning(
+                "[LLM] transient error (%s), retry %d/%d in %.1fs: %s",
+                e.__class__.__name__,
+                i + 1,
+                tries - 1,
+                sleep_s,
+                e,
+            )
+            time.sleep(sleep_s)
+    # final attempt (if it fails, it raises to caller)
+    return fn()
 
 
 class LLMClient:
@@ -39,14 +65,12 @@ class LLMClient:
     def generate(
         self, system_prompt: str, history: list[Message], user_text: str
     ) -> str:
-        """Generate a response from the LLM based on the input."""
+        """Generate a reply from the LLM given the prompt, history, and user text."""
         context = history[-6:] if len(history) > 6 else history
 
-        messages: list[dict] = [{"role": "system", "content": system_prompt}]
+        messages: list[dict[str, str]] = [{"role": "system", "content": system_prompt}]
         for m in context:
             messages.append({"role": _to_openai_role(m.role), "content": m.message})
-
-        # Avoid duplicate user messages in the context
         if (
             not context
             or context[-1].role != "user"
@@ -54,7 +78,8 @@ class LLMClient:
         ):
             messages.append({"role": "user", "content": user_text})
 
-        try:
+        def _call() -> str:
+            """Make the actual API call to OpenAI."""
             resp = self.client.chat.completions.create(
                 model=settings.OPENAI_MODEL,
                 messages=messages,
@@ -63,6 +88,9 @@ class LLMClient:
                 timeout=settings.OPENAI_TIMEOUT,
             )
             return resp.choices[0].message.content or ""
+
+        try:
+            return _with_backoff(_call, tries=3)
         except (
             AuthenticationError,
             BadRequestError,

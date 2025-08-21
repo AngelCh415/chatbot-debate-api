@@ -1,82 +1,83 @@
 # Chatbot Debate API
 
-API desarrollada con **FastAPI** para gestionar debates entre usuarios y un bot.  
-El bot está integrado con **OpenAI** y responde en **modo debate por defecto**: toma una postura y defiende/contra-argumenta de forma persuasiva, manteniéndose en el tema original de la conversación.
+API built with **FastAPI** to manage debates between users and a bot.  
+The bot is integrated with **OpenAI** and responds in **debate mode by default**: it takes a stance and argues persuasively while staying on the original topic of the conversation.
 
 ---
 
-## 🚀 Instalación
+## 🚀 Installation
 
-Clona el repositorio e instala dependencias:
+Clone the repository and install dependencies:
 
 ```bash
-git clone <URL_DEL_REPO>
-cd <NOMBRE_DEL_PROYECTO>
+git clone <REPO_URL>
+cd <PROJECT_NAME>
 poetry install
 ```
 
-## ⚙️ Configuración
+## ⚙️ Configuration
 
-Crea un archivo .env en la raíz del proyecto con las variables necesarias (usa .env.sample como referencia):
+Create a .env file at the project root with the required variables (use .env.sample as a reference):
 
 ```bash
 USE_AI=true
 
-# Clave de OpenAI
-OPENAI_API_KEY=tu_api_key_de_openai
+# OpenAI Key
+OPENAI_API_KEY=your_open_ai_key
 
-# Modelo y parámetros
+# Model and parameters
 OPENAI_MODEL=gpt-4o-mini
 OPENAI_TIMEOUT=15
 MAX_TOKENS=400
 TEMPERATURE=0.6
 
-# (Opcional) Modo debug: si hay un error del LLM, devuelve el mensaje [DEBUG ...]
+# (Optional) Debug mode: if the LLM fails, return [DEBUG ...] message
 DEBUG=true
 ```
 
-## ▶️ Ejecución
+## ▶️ Run
 
-Modo mock (sin IA, rápido para desarrollo):
+Mock mode (no AI, fast for development):
 ```bash
 make run
-# o
+# or
 poetry run uvicorn app.main:app --reload --port 8000
 ```
-Modo IA (Usa OpenAI):
+AI mode (using OpenAI):
 ```bash
 make run-ai
 ```
-La API quedará disponible en:
+The API will be available at:
 
 ```bash
 
 http://127.0.0.1:8000
 ```
-## 📡 Endpoints principales
+## 📡 Main Endpoints
 GET /
 
-Verificación de salud.
+Health check.
 
-Ejemplo (curl):
+Example (curl):
 ```bash
 curl -s http://127.0.0.1:8000/
 ```
 
-Posible respuesta:
+Possible response:
+
 
 { "status": "ok", "message": "Chatbot Debate API is running" }
 
 
 POST /chat
 
-Inicia o continúa una conversación de debate.
+Start or continue a debate conversation.
 
-Si no envías conversation_id, se crea uno nuevo.
+If no conversation_id is provided, a new one is created.
 
-El bot se mantiene en el tema original y no cambia de postura.
+The bot sticks to the original topic and does not switch stance.
 
-El historial retorna hasta 5 mensajes por lado (más recientes al final).
+The history returns up to 5 messages per side (most recent at the end).
 Request (iniciar):
 ```bash
 
@@ -89,7 +90,7 @@ curl -X POST http://127.0.0.1:8000/chat \
   }'
 
 ```
-Respuesta (ejemplo):
+Response (example):
 ```bash
 
 
@@ -102,7 +103,7 @@ Respuesta (ejemplo):
   ]
 }
 ```
-Request (continuar):
+Request (continue):
 ```bash
 curl -X POST http://127.0.0.1:8000/chat \
   -H "Content-Type: application/json" \
@@ -112,28 +113,31 @@ curl -X POST http://127.0.0.1:8000/chat \
   }'
   ```
 
-## 🧪 Pruebas y cobertura
-Tests unitarios:
+## 🧪 Tests & Coverage
+
+Run unit tests:
 ```bash
 make test
 ```
-Cobertura (mínimo 80% + reporte HTML opcional):
+Run with coverage (minimum 80% + optional HTML report):
 ```bash
 make test-cov
-make cov-html   # abre ./htmlcov/index.html
+make cov-html   # open ./htmlcov/index.html
 ```
-Durante los tests forzamos USE_AI=false para no llamar a la red.
+During tests, USE_AI=false is enforced to avoid real API calls.
 
-## 🧰 Makefile (atajos útiles)
+
+## 🧰 Makefile (useful shortcuts)
 
 ```bash
-make            # muestra comandos disponibles
-make install    # instala dependencias
-make checks     # black + ruff + mypy
-make test       # pytest
-make test-cov   # pytest con coverage >= 80%
-make cov-html   # genera reporte HTML de coverage
-make run        # arranca en modo mock
-make run-ai     # arranca en modo IA (OpenAI)
-make clean      # limpia cachés/containers temporales
+make            # show available commands
+make install    # install dependencies
+make checks     # run black + ruff + mypy
+make test       # run pytest
+make test-cov   # pytest with coverage >= 80%
+make cov-html   # generate HTML coverage report
+make run        # start in mock mode
+make run-ai     # start in AI mode (OpenAI)
+make clean      # clean caches/temp containers
+
 ```
