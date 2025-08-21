@@ -4,10 +4,10 @@ from typing import Any
 
 from pytest import MonkeyPatch
 
-import app.llm as llm_mod
-from app import service
-from app.models import Message
-from app.service import generate_ai_reply
+import app.services.llm as llm_mod
+from app.core import settings as settings_mod
+from app.models.chat import Message
+from app.services import debate
 
 
 class DummyClient:
@@ -61,8 +61,11 @@ def test_generate_ai_reply_with_monkeypatch(monkeypatch: MonkeyPatch) -> None:
     """Test the generate_ai_reply function with a mocked LLMClient."""
     # Mock the LLMClient to return a fixed response
 
-    monkeypatch.setattr(service, "LLMClient", lambda: DummyClient())
-    text = generate_ai_reply(
+    monkeypatch.setattr(
+        "app.services.debate.LLMClient", lambda: DummyClient(), raising=False
+    )
+    monkeypatch.setattr(settings_mod.settings, "USE_AI", True, raising=True)
+    text = debate.generate_ai_reply(
         user_text="why?",
         topic="Pepsi vs Coke",
         stance="pro Pepsi",

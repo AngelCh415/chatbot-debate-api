@@ -39,15 +39,7 @@ cov-html:
 	@echo "Open ./htmlcov/index.html in your browser"
 
 # ---------- Docker ----------
-run: ## run in Docker (mock mode)
-	docker build -t $(DOCKER_IMAGE):$(DOCKER_TAG) .
-	docker run -d --rm --name $(DOCKER_NAME) \
-		-p $(DOCKER_PORT):8000 \
-		-e USE_AI=false \
-		$(DOCKER_IMAGE):$(DOCKER_TAG)
-	@echo "API running at http://127.0.0.1:$(DOCKER_PORT)"
-
-run-ai: ## run in Docker (AI mode with OpenAI)
+run: ## run in Docker (AI mode with OpenAI)
 	@[ -n "$$OPENAI_API_KEY" ] || (echo "ERROR: set OPENAI_API_KEY" && exit 1)
 	docker build -t $(DOCKER_IMAGE):$(DOCKER_TAG) .
 	docker run -d --rm --name $(DOCKER_NAME) \

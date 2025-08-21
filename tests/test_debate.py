@@ -2,8 +2,8 @@
 
 from fastapi.testclient import TestClient
 
-from app.models import Message
-from app.service import (
+from app.models.chat import Message
+from app.services.debate import (
     extract_topic_from_text,
     generate_cohesive_reply,
     generate_placeholder_reply,

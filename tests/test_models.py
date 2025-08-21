@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from app.models import ChatRequest, Message
+from app.models.chat import ChatRequest, Message
 
 
 def test_chat_request_accepts_null_conversation_id() -> None:
