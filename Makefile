@@ -54,3 +54,52 @@ env-example:
 	@cp -n .env.sample .env || true
 	@echo "Created .env (if not existed). Update OPENAI_API_KEY before run-ai."
 
+# ---------- Docker ----------
+DOCKER_IMAGE ?= chatbot-debate-api
+DOCKER_TAG   ?= latest
+DOCKER_NAME  ?= chatbot-debate-api
+DOCKER_PORT  ?= 8000
+
+.PHONY: docker-build docker-run docker-run-mock docker-run-ai docker-shell docker-logs docker-stop docker-clean docker-push
+
+docker-build:  ## Build local Docker image
+	docker build -t $(DOCKER_IMAGE):$(DOCKER_TAG) .
+
+docker-run: docker-run-mock ## Alias to mock
+
+docker-run-mock: ## Run container in mock mode (no OpenAI)
+	docker run --rm -d --name $(DOCKER_NAME) \
+		-p $(DOCKER_PORT):8000 \
+		-e USE_AI=false \
+		$(DOCKER_IMAGE):$(DOCKER_TAG)
+
+docker-run-ai: ## Run container using OpenAI (requires OPENAI_API_KEY)
+	@[ -n "$$OPENAI_API_KEY" ] || (echo "ERROR: set OPENAI_API_KEY in your environment" && exit 1)
+	docker run --rm -d --name $(DOCKER_NAME) \
+		-p $(DOCKER_PORT):8000 \
+		-e USE_AI=true \
+		-e OPENAI_API_KEY="$$OPENAI_API_KEY" \
+		-e OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini} \
+		-e OPENAI_TIMEOUT=${OPENAI_TIMEOUT:-15} \
+		-e MAX_TOKENS=${MAX_TOKENS:-400} \
+		-e TEMPERATURE=${TEMPERATURE:-0.6} \
+		$(DOCKER_IMAGE):$(DOCKER_TAG)
+
+docker-shell: ## Open a shell inside the running container
+	docker exec -it $(DOCKER_NAME) /bin/bash
+
+docker-logs: ## Tail logs
+	docker logs -f $(DOCKER_NAME)
+
+docker-stop: ## Stop container
+	- docker stop $(DOCKER_NAME)
+
+docker-clean: docker-stop ## Remove dangling images/containers
+	- docker rm $(DOCKER_NAME) 2>/dev/null || true
+	- docker image prune -f
+
+docker-push: ## Push to registry (set REGISTRY=user_or_registry)
+	@[ -n "$(REGISTRY)" ] || (echo "ERROR: set REGISTRY=myuser or registry.example.com/myproj" && exit 1)
+	docker tag $(DOCKER_IMAGE):$(DOCKER_TAG) $(REGISTRY)/$(DOCKER_IMAGE):$(DOCKER_TAG)
+	docker push $(REGISTRY)/$(DOCKER_IMAGE):$(DOCKER_TAG)
+
