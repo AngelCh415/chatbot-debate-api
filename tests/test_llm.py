@@ -17,7 +17,7 @@ class DummyClient:
         self, system_prompt: str, history: list[Message], user_text: str
     ) -> str:
         """Return a fixed response mimicking an AI reply."""
-        return "Mocked AI reply anchored to thesis."
+        return "Mocked AI reply."
 
 
 class _DummyChoiceMsg:

@@ -25,3 +25,10 @@ def client() -> TestClient:
 def fake_openai_key(monkeypatch: MonkeyPatch) -> None:
     """Set a fake OpenAI API key for tests."""
     monkeypatch.setenv("OPENAI_API_KEY", "test")
+
+
+@pytest.fixture(autouse=True)
+def _fake_openai_env(monkeypatch: MonkeyPatch) -> None:
+    """Ensure a fake OpenAI API key is set for tests."""
+    monkeypatch.setenv("OPENAI_API_KEY", "test")
+    settings.OPENAI_API_KEY = "test"
