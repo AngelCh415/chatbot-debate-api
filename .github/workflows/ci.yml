@@ -1,5 +1,4 @@
 name: CI
-
 on:
   push:
     branches: [ "main" ]
@@ -19,8 +18,8 @@ jobs:
       - name: Install Poetry
         run: pip install poetry
 
-      - name: Install dependencies
-        run: poetry install
+      - name: Install dependencies (no root)
+        run: poetry install --no-root
 
       - name: Lint & type checks
         run: make checks
