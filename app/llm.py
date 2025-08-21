@@ -78,11 +78,14 @@ def _to_openai_role(role: str) -> str:
 class LLMClient:
     """Thin wrapper around OpenAI Chat Completions."""
 
-    def __init__(self) -> None:
+    def __init__(self, client: OpenAI | None = None) -> None:
         """Initialize the LLM client."""
-        if not settings.OPENAI_API_KEY:
-            raise RuntimeError("OPENAI_API_KEY is required when USE_AI=True")
-        self.client = OpenAI(api_key=settings.OPENAI_API_KEY)
+        if client is not None:
+            self.client = client
+        else:
+            if not settings.OPENAI_API_KEY:
+                raise RuntimeError("OPENAI_API_KEY is required when USE_AI=True")
+            self.client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
     def generate(
         self, system_prompt: str, history: list[Message], user_text: str

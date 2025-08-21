@@ -2,6 +2,7 @@
 
 import pytest
 from fastapi.testclient import TestClient
+from pytest import MonkeyPatch
 
 from app.main import app, store
 from app.settings import settings
@@ -18,3 +19,9 @@ def client() -> TestClient:
     """Fixture to create a test client for FastAPI."""
     store._data.clear()
     return TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def fake_openai_key(monkeypatch: MonkeyPatch) -> None:
+    """Set a fake OpenAI API key for tests."""
+    monkeypatch.setenv("OPENAI_API_KEY", "test")
