@@ -16,6 +16,7 @@ from openai import (
     OpenAI,
     RateLimitError,
 )
+from openai.types.chat import ChatCompletionMessageParam
 
 from .models import Message
 from .settings import settings
@@ -68,7 +69,9 @@ class LLMClient:
         """Generate a reply from the LLM given the prompt, history, and user text."""
         context = history[-6:] if len(history) > 6 else history
 
-        messages: list[dict[str, str]] = [{"role": "system", "content": system_prompt}]
+        messages: list[ChatCompletionMessageParam] = [
+            {"role": "system", "content": system_prompt}
+        ]
         for m in context:
             messages.append({"role": _to_openai_role(m.role), "content": m.message})
         if (
