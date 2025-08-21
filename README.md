@@ -53,6 +53,16 @@ The API will be available at:
 
 http://127.0.0.1:8000
 ```
+
+## Run with Docker (recommended)
+```bash
+# build & up
+make run
+
+# stop
+make down
+```
+
 ## 📡 Main Endpoints
 GET /
 
@@ -130,14 +140,16 @@ During tests, USE_AI=false is enforced to avoid real API calls.
 ## 🧰 Makefile (useful shortcuts)
 
 ```bash
-make            # show available commands
-make install    # install dependencies
+make            # show all available commands
+make install    # install dependencies with Poetry
 make checks     # run black + ruff + mypy
 make test       # run pytest
-make test-cov   # pytest with coverage >= 80%
+make test-cov   # pytest with minimum 80% coverage
 make cov-html   # generate HTML coverage report
-make run        # start in mock mode
-make run-ai     # start in AI mode (OpenAI)
-make clean      # clean caches/temp containers
+make run        # start the API in mock mode (no OpenAI)
+make run-ai     # start the API in AI mode (requires OPENAI_API_KEY)
+make down       # stop Docker containers
+make clean      # remove caches and temporary containers
+
 
 ```
