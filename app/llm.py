@@ -6,7 +6,7 @@ import logging
 import random
 import time
 from collections.abc import Callable
-from typing import TypeVar
+from typing import TypeVar, cast
 
 from openai import (
     APIConnectionError,
@@ -16,18 +16,18 @@ from openai import (
     OpenAI,
     RateLimitError,
 )
-from openai.types.chat import ChatCompletionMessageParam
+from openai.types.chat import (
+    ChatCompletionAssistantMessageParam,
+    ChatCompletionMessageParam,
+    ChatCompletionSystemMessageParam,
+    ChatCompletionUserMessageParam,
+)
 
 from .models import Message
 from .settings import settings
 
 logger = logging.getLogger("uvicorn.error")
 T = TypeVar("T")
-
-
-def _to_openai_role(role: str) -> str:
-    """Map internal roles ('user'|'bot') to OpenAI roles ('user'|'assistant')."""
-    return "assistant" if role == "bot" else "user"
 
 
 def _with_backoff(fn: Callable[[], T], *, tries: int = 3) -> T:
@@ -54,6 +54,27 @@ def _with_backoff(fn: Callable[[], T], *, tries: int = 3) -> T:
     return fn()
 
 
+# helpers tipados (colócalos cerca de LLMClient o arriba)
+def _sys_msg(content: str) -> ChatCompletionSystemMessageParam:
+    """Create a system message for OpenAI ChatCompletion."""
+    return {"role": "system", "content": content}
+
+
+def _user_msg(content: str) -> ChatCompletionUserMessageParam:
+    """Create a user message for OpenAI ChatCompletion."""
+    return {"role": "user", "content": content}
+
+
+def _asst_msg(content: str) -> ChatCompletionAssistantMessageParam:
+    """Create an assistant message for OpenAI ChatCompletion."""
+    return {"role": "assistant", "content": content}
+
+
+def _to_openai_role(role: str) -> str:
+    """Map internal roles ('user'|'bot') to OpenAI roles ('user'|'assistant')."""
+    return "assistant" if role == "bot" else "user"
+
+
 class LLMClient:
     """Thin wrapper around OpenAI Chat Completions."""
 
@@ -70,10 +91,14 @@ class LLMClient:
         context = history[-6:] if len(history) > 6 else history
 
         messages: list[ChatCompletionMessageParam] = [
-            {"role": "system", "content": system_prompt}
+            cast(ChatCompletionMessageParam, _sys_msg(system_prompt))
         ]
         for m in context:
-            messages.append({"role": _to_openai_role(m.role), "content": m.message})
+            role = _to_openai_role(m.role)
+            if role == "assistant":
+                messages.append(cast(ChatCompletionMessageParam, _asst_msg(m.message)))
+            else:
+                messages.append(cast(ChatCompletionMessageParam, _user_msg(m.message)))
         if (
             not context
             or context[-1].role != "user"
