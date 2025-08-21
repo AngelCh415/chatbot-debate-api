@@ -73,17 +73,20 @@ docker-run-mock: ## Run container in mock mode (no OpenAI)
 		-e USE_AI=false \
 		$(DOCKER_IMAGE):$(DOCKER_TAG)
 
-docker-run-ai: ## Run container using OpenAI (requires OPENAI_API_KEY)
+docker-run-ai-fg: ## Run AI mode in foreground (no --rm) to see logs
 	@[ -n "$$OPENAI_API_KEY" ] || (echo "ERROR: set OPENAI_API_KEY in your environment" && exit 1)
-	docker run --rm -d --name $(DOCKER_NAME) \
+	docker run --name $(DOCKER_NAME) \
 		-p $(DOCKER_PORT):8000 \
 		-e USE_AI=true \
 		-e OPENAI_API_KEY="$$OPENAI_API_KEY" \
-		-e OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini} \
-		-e OPENAI_TIMEOUT=${OPENAI_TIMEOUT:-15} \
-		-e MAX_TOKENS=${MAX_TOKENS:-400} \
-		-e TEMPERATURE=${TEMPERATURE:-0.6} \
 		$(DOCKER_IMAGE):$(DOCKER_TAG)
+
+docker-ps: ## Show all containers related to this project
+	docker ps -a | sed -n '1p;/$(DOCKER_NAME)/p'
+
+docker-inspect: ## Inspect state of the named container
+	docker inspect $(DOCKER_NAME) --format='ExitCode={{.State.ExitCode}} Status={{.State.Status}} Started={{.State.StartedAt}} Finished={{.State.FinishedAt}}' || true
+
 
 docker-shell: ## Open a shell inside the running container
 	docker exec -it $(DOCKER_NAME) /bin/bash
