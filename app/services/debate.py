@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import re
 
+from app.core.settings import settings
+from app.models.chat import Message
+
 from .llm import LLMClient
-from .models import Message
-from .settings import settings
 
 _STOPWORDS = frozenset(
     {

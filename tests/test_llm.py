@@ -4,10 +4,10 @@ from typing import Any
 
 from pytest import MonkeyPatch
 
-import app.llm as llm_mod
-from app import service
-from app.models import Message
-from app.service import generate_ai_reply
+import app.services.llm as llm_mod
+from app import services as service
+from app.models.chat import Message
+from app.services.debate import generate_ai_reply
 
 
 class DummyClient:

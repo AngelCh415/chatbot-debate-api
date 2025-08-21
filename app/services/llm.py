@@ -23,8 +23,8 @@ from openai.types.chat import (
     ChatCompletionUserMessageParam,
 )
 
-from .models import Message
-from .settings import settings
+from app.core.settings import settings
+from app.models.chat import Message
 
 logger = logging.getLogger("uvicorn.error")
 T = TypeVar("T")

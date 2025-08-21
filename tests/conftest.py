@@ -4,8 +4,9 @@ import pytest
 from fastapi.testclient import TestClient
 from pytest import MonkeyPatch
 
-from app.main import app, store
-from app.settings import settings
+from app.core.settings import Settings as settings
+from app.core.store import MemoryStore as store
+from app.main import app
 
 
 @pytest.fixture(autouse=True)

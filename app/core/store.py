@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import deque
 from dataclasses import dataclass, field
 
-from .models import Message
+from app.models.chat import Message
 
 
 @dataclass
