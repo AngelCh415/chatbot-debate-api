@@ -37,16 +37,11 @@ DEBUG=true
 
 ## ▶️ Run
 
-Mock mode (no AI, fast for development):
-```bash
-make run
-# or
-poetry run uvicorn app.main:app --reload --port 8000
-```
 AI mode (using OpenAI):
 ```bash
-make run-ai
+make run
 ```
+
 The API will be available at:
 
 ```bash
