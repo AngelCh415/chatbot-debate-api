@@ -57,27 +57,57 @@ def _normalize_text(s: str) -> str:
     return s
 
 
-def _last_user_message(recent_history: Iterable[Message] | None) -> str | None:
-    """Return the last user message from recent_history, or None if not found."""
+def _last_user(recent_history: Iterable[Message] | None) -> str | None:
+    """Return the last user message in recent_history, skipping the most recent one."""
     if not recent_history:
         return None
+    seen_last_user = False
     for m in reversed(list(recent_history)):
         if m.role == "user":
+            if not seen_last_user:
+                seen_last_user = True
+                continue
+            return m.message
+    return None
+
+
+def _prev_user_excluding_last(
+    recent_history: Iterable[Message] | None,
+) -> str | None:
+    """Return the user message before the last one in recent_history."""
+    if not recent_history:
+        return None
+    seen_last = False
+    for m in reversed(list(recent_history)):
+        if m.role == "user":
+            if not seen_last:
+                seen_last = True  # posible "mensaje actual" ya metido al history
+                continue
             return m.message
     return None
 
 
 def _is_repeat(user_text: str, recent_history: Iterable[Message] | None) -> bool:
-    """Check if user_text is a repeat of the last user message in recent_history."""
-    last = _last_user_message(recent_history)
-    if not last:
+    """Detect if the user is repeating themselves."""
+    candidate = _prev_user_excluding_last(recent_history)
+    if candidate is None:
+        candidate = _last_user(recent_history)
+    if not candidate:
         return False
+
     a = _normalize_text(user_text)
-    b = _normalize_text(last)
+    b = _normalize_text(candidate)
     if a == b:
         return True
-    sim = SequenceMatcher(None, a, b).ratio()
-    return sim >= _REPEAT_SIMILARITY
+    return SequenceMatcher(None, a, b).ratio() >= _REPEAT_SIMILARITY
+
+
+def _norm(s: str) -> str:
+    """Normalize text for comparison."""
+    s = s.strip().lower()
+    s = re.sub(r"[^\w\s]", " ", s)
+    s = re.sub(r"\s+", " ", s)
+    return s
 
 
 def extract_topic_from_text(text: str) -> str | None:
@@ -240,13 +270,39 @@ def generate_cohesive_reply(
     """
     claim = f"My stance remains: {thesis}."
 
-    if _is_repeat(user_text, recent_history):
-        # User is repeating themselves
-        return (
-            f"It looks like you’re asking the same point again. {claim} "
-            "Would you like me to address it from a different angle—evidence, "
-            "costs, ethics, or feasibility?"
-        )
+    last_user: str | None = None
+    if recent_history:
+        for m in reversed(recent_history):
+            if m.role == "user":
+                last_user = m.message
+                break
+
+        if (
+            last_user
+            and _norm(last_user) == _norm(user_text)
+            and len(recent_history) > 1
+        ):
+            seen_last = False
+            prev_user = None
+            for m in reversed(recent_history):
+                if m.role == "user":
+                    if not seen_last:
+                        seen_last = True
+                        continue
+                    prev_user = m.message
+                    break
+            if prev_user:
+                last_user = prev_user
+
+    if last_user:
+        a, b = _norm(user_text), _norm(last_user)
+        sim = SequenceMatcher(None, a, b).ratio()
+        if a == b or sim >= 0.93:
+            return (
+                f"It looks like you’re asking the same point again. {claim} "
+                "Would you like me to address it from a different angle—evidence, "
+                "costs, ethics, or feasibility?"
+            )
 
     if not _on_topic(user_text, thesis):
         return (
@@ -296,6 +352,13 @@ def generate_ai_reply(
         return (
             "AI is temporarily unavailable. My stance remains the same. "
             "Could you address the main point?"
+        )
+    if _is_repeat(user_text, recent_history):
+        # User is repeating themselves
+        return (
+            f"It looks like you’re asking the same point again. {thesis} "
+            "Would you like me to address it from a different angle—evidence, "
+            "costs, ethics, or feasibility?"
         )
     system_prompt = f"""
         You are a debate assistant.
