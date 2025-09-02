@@ -81,7 +81,7 @@ def _prev_user_excluding_last(
     for m in reversed(list(recent_history)):
         if m.role == "user":
             if not seen_last:
-                seen_last = True  # posible "mensaje actual" ya metido al history
+                seen_last = True
                 continue
             return m.message
     return None
