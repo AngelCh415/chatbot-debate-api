@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
+from difflib import SequenceMatcher
 
 from app.core.settings import settings
 from app.models.chat import Message
 from app.services.llm import LLMClient
+
+_REPEAT_SIMILARITY = 0.93
 
 _STOPWORDS = frozenset(
     {
@@ -43,6 +47,37 @@ _STOPWORDS = frozenset(
         "more",
     }
 )
+
+
+def _normalize_text(s: str) -> str:
+    """Minimal normalization for text comparison."""
+    s = s.strip().lower()
+    s = re.sub(r"[\.\,\!\?\:\;\-\_]+", " ", s)
+    s = re.sub(r"\s+", " ", s)
+    return s
+
+
+def _last_user_message(recent_history: Iterable[Message] | None) -> str | None:
+    """Return the last user message from recent_history, or None if not found."""
+    if not recent_history:
+        return None
+    for m in reversed(list(recent_history)):
+        if m.role == "user":
+            return m.message
+    return None
+
+
+def _is_repeat(user_text: str, recent_history: Iterable[Message] | None) -> bool:
+    """Check if user_text is a repeat of the last user message in recent_history."""
+    last = _last_user_message(recent_history)
+    if not last:
+        return False
+    a = _normalize_text(user_text)
+    b = _normalize_text(last)
+    if a == b:
+        return True
+    sim = SequenceMatcher(None, a, b).ratio()
+    return sim >= _REPEAT_SIMILARITY
 
 
 def extract_topic_from_text(text: str) -> str | None:
@@ -204,6 +239,14 @@ def generate_cohesive_reply(
     - Avoid repeating the last bot message by alternating templates.
     """
     claim = f"My stance remains: {thesis}."
+
+    if _is_repeat(user_text, recent_history):
+        # User is repeating themselves
+        return (
+            f"It looks like you’re asking the same point again. {claim} "
+            "Would you like me to address it from a different angle—evidence, "
+            "costs, ethics, or feasibility?"
+        )
 
     if not _on_topic(user_text, thesis):
         return (

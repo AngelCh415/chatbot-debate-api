@@ -107,3 +107,18 @@ def test_generate_cohesive_reply_varies_template() -> None:
         recent_history=hist,
     )
     assert "trade-off" in r2.lower()
+
+
+def test_generate_cohesive_reply_handles_repeat() -> None:
+    """Tests that the cohesive reply handles repeated user messages."""
+    thesis = "Pepsi is better than Coke"
+    hist = [Message(role="user", message="why is pepsi better?")]
+    out = generate_cohesive_reply(
+        user_text="Why is Pepsi better?",
+        topic="Pepsi vs Coke",
+        stance="pro Pepsi",
+        thesis=thesis,
+        recent_history=hist,
+    )
+    assert "same point" in out.lower() or "different angle" in out.lower()
+    assert thesis in out
