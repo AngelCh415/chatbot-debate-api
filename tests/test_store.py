@@ -1,7 +1,7 @@
 """Tests for the in-memory store and history trimming."""
 
-from app.core.store import ConversationState, MemoryStore, trim_history
 from app.models.chat import Message
+from app.storage.memory import ConversationState, MemoryStore, trim_history
 
 
 def test_store_get_set_exists() -> None:

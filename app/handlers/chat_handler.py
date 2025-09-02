@@ -7,7 +7,6 @@ import uuid
 from fastapi import HTTPException
 
 from app.core.settings import settings
-from app.core.store import ConversationState, MemoryStore, trim_history
 from app.models.chat import ChatRequest, ChatResponse, Message
 from app.services.debate import (
     extract_topic_from_text,
@@ -15,6 +14,7 @@ from app.services.debate import (
     generate_cohesive_reply,
     parse_topic_and_stance,
 )
+from app.storage.memory import ConversationState, MemoryStore, trim_history
 
 store = MemoryStore()
 
