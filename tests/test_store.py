@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import deque
+from typing import cast
 
 import fakeredis
 import pytest
@@ -48,7 +49,8 @@ def test_set_get_roundtrip(store: RedisStore, fake_client: fakeredis.FakeRedis) 
     assert list(m.message for m in got.history) == ["hi", "hello"]
 
     key = f"conv:{cid}"
-    assert fake_client.ttl(key) > 0
+    ttl_val = cast(int, fake_client.ttl(key))
+    assert ttl_val > 0
 
 
 def test_exists_and_delete(store: RedisStore) -> None:

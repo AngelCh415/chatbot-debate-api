@@ -86,6 +86,6 @@ def handle_chat_message(req: ChatRequest) -> ChatResponse:
     state = trimmed or state
     store.set(cid, state)
 
-    messages = [{"role": m.role, "message": m.message} for m in state.history]
+    messages = list(state.history)
 
     return ChatResponse(conversation_id=cid, message=messages)

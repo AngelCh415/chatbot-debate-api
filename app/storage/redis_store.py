@@ -8,7 +8,7 @@ from collections import deque
 from datetime import timedelta
 from typing import Any, cast
 
-import redis  # type: ignore[import-untyped]
+import redis
 
 from app.models.chat import ConversationState, Message
 
@@ -74,7 +74,7 @@ class RedisStore(BaseStore):
 
     def get(self, cid: str) -> ConversationState | None:
         """Get the conversation state for a given conversation ID."""
-        raw = self.client.get(self._key(cid))
+        raw = cast(str | None, self.client.get(self._key(cid)))
         if raw is None:
             return None
         data = cast(dict[str, Any], json.loads(raw))

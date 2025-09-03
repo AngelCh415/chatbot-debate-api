@@ -30,6 +30,7 @@ mypy = "^1.17.1"
 pre-commit = "^4.3.0"
 pytest-cov = "^6.2.1"
 fakeredis = ">=2.23"
+types-redis = "^4.6.0.20241004"
 [tool.black]
 line-length = 88
 target-version = ["py311"]
@@ -82,4 +83,8 @@ warn_unused_ignores = true
 no_implicit_optional = true
 pretty = true
 
+
+[[tool.mypy.overrides]]
+module = ["redis", "redis.*", "fakeredis", "fakeredis.*"]
+ignore_missing_imports = true
 
