@@ -2,24 +2,7 @@
 
 from __future__ import annotations
 
-from collections import deque
-from dataclasses import dataclass, field
-
-from app.models.chat import Message
-
-
-@dataclass
-class ConversationState:
-    """Holds topic, stance and rolling history for a conversation."""
-
-    # topic is the subject of the debate
-    topic: str
-    # stance can be "pro" or "con"
-    stance: str
-    # thesis is the main argument or position
-    thesis: str
-    # history is a rolling history of messages in the conversation
-    history: deque[Message] = field(default_factory=deque)
+from app.models.chat import ConversationState, Message
 
 
 class MemoryStore:

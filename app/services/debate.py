@@ -9,6 +9,9 @@ from difflib import SequenceMatcher
 from app.core.settings import settings
 from app.models.chat import Message
 from app.services.llm import LLMClient
+from app.storage import get_store
+
+store = get_store()
 
 _REPEAT_SIMILARITY = 0.93
 

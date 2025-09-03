@@ -58,3 +58,16 @@ clean: down ## stop & remove caches/containers
 	- docker image prune -f
 	- rm -rf .pytest_cache .mypy_cache .ruff_cache
 	- find . -type d -name "__pycache__" -exec rm -rf {} +
+
+.PHONY: redis-up redis-down redis-logs
+
+redis-up:
+	docker run -d --name chatbot-redis -p 6379:6379 redis:7-alpine
+
+redis-logs:
+	docker logs -f chatbot-redis
+
+redis-down:
+	- docker rm -f chatbot-redis 2>/dev/null || true
+
+
