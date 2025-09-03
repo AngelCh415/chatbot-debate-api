@@ -1,0 +1,29 @@
+version: "3.9"
+
+services:
+  api:
+    build: .
+    container_name: chatbot-debate-api
+    ports:
+      - "8000:8000"
+    environment:
+      USE_AI: "true"
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      REDIS_URL: "redis://redis:6379/0"
+      STORE_BACKEND: "redis"       
+      REDIS_TTL_DAYS: "7"   
+    volumes:
+      - .:/app          
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload  --log-level info
+    depends_on:
+      - redis
+  redis:
+    image: redis:7.2
+    container_name: chatbot-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  redis_data:
