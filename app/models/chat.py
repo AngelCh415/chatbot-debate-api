@@ -1,7 +1,7 @@
 """Pydantic models for the Chatbot Debate API."""
 
 from collections import deque
-from dataclasses import dataclass, field
+from dataclasses import field
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -34,11 +34,10 @@ class ChatResponse(BaseModel):
     """Output schema for the chat."""
 
     conversation_id: str
-    message: list[Message]
+    message: list[Message] = Field(default_factory=list)
 
 
-@dataclass
-class ConversationState:
+class ConversationState(BaseModel):
     """Holds topic, stance and rolling history for a conversation."""
 
     # topic is the subject of the debate

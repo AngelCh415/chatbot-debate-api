@@ -39,18 +39,14 @@ cov-html:
 	@echo "Open ./htmlcov/index.html in your browser"
 
 # ---------- Docker ----------
-run: ## run in Docker (AI mode with OpenAI)
+run: ## run API + Redis in Docker (AI mode with OpenAI)
 	@[ -n "$$OPENAI_API_KEY" ] || (echo "ERROR: set OPENAI_API_KEY" && exit 1)
-	docker build -t $(DOCKER_IMAGE):$(DOCKER_TAG) .
-	docker run -d --rm --name $(DOCKER_NAME) \
-		-p $(DOCKER_PORT):8000 \
-		-e USE_AI=true \
-		-e OPENAI_API_KEY="$$OPENAI_API_KEY" \
-		$(DOCKER_IMAGE):$(DOCKER_TAG)
-	@echo "API running with AI mode at http://127.0.0.1:$(DOCKER_PORT)"
+	docker compose up --build
 
-down: ## stop Docker container
-	- docker stop $(DOCKER_NAME)
+
+down: ## stop and remove containers
+	docker compose down
+
 
 clean: down ## stop & remove caches/containers
 	- docker rm $(DOCKER_NAME) 2>/dev/null || true

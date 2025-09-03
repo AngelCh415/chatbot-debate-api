@@ -4,11 +4,10 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from app.models.chat import Message
-from app.storage.memory import ConversationState
+from app.models.chat import ConversationState
 
 
-class Store(Protocol):
+class BaseStore(Protocol):
     """Protocol for conversation state storage."""
 
     def get(self, cid: str) -> ConversationState | None:
@@ -23,10 +22,6 @@ class Store(Protocol):
         """Return True if conversation id exists."""
         ...
 
-    def append(self, cid: str, msg: Message) -> None:
-        """Append a message to the conversation history."""
-        ...
-
-    def trim(self, cid: str, max_per_side: int = 5) -> None:
+    def trim(self, cid: str, *, max_per_side: int = 5) -> ConversationState | None:
         """Trim the conversation history to at most `max_per_side` per role."""
         ...

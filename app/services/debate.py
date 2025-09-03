@@ -3,15 +3,11 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Iterable
 from difflib import SequenceMatcher
 
 from app.core.settings import settings
 from app.models.chat import Message
 from app.services.llm import LLMClient
-from app.storage import get_store
-
-store = get_store()
 
 _REPEAT_SIMILARITY = 0.93
 
@@ -52,75 +48,24 @@ _STOPWORDS = frozenset(
 )
 
 
-def _normalize_text(s: str) -> str:
-    """Minimal normalization for text comparison."""
-    s = s.strip().lower()
-    s = re.sub(r"[\.\,\!\?\:\;\-\_]+", " ", s)
-    s = re.sub(r"\s+", " ", s)
-    return s
-
-
-def _last_user(recent_history: Iterable[Message] | None) -> str | None:
-    """Return the last user message in recent_history, skipping the most recent one."""
-    if not recent_history:
-        return None
-    seen_last_user = False
-    for m in reversed(list(recent_history)):
-        if m.role == "user":
-            if not seen_last_user:
-                seen_last_user = True
-                continue
-            return m.message
-    return None
-
-
-def _prev_user_excluding_last(
-    recent_history: Iterable[Message] | None,
-) -> str | None:
-    """Return the user message before the last one in recent_history."""
-    if not recent_history:
-        return None
-    seen_last = False
-    for m in reversed(list(recent_history)):
-        if m.role == "user":
-            if not seen_last:
-                seen_last = True
-                continue
-            return m.message
-    return None
-
-
-def _is_repeat(user_text: str, recent_history: Iterable[Message] | None) -> bool:
-    """Detect if the user is repeating themselves."""
-    candidate = _prev_user_excluding_last(recent_history)
-    if candidate is None:
-        candidate = _last_user(recent_history)
-    if not candidate:
-        return False
-
-    a = _normalize_text(user_text)
-    b = _normalize_text(candidate)
-    if a == b:
-        return True
-    return SequenceMatcher(None, a, b).ratio() >= _REPEAT_SIMILARITY
-
-
 def _norm(s: str) -> str:
     """Normalize text for comparison."""
-    s = s.strip().lower()
+    s = s.casefold().strip()
     s = re.sub(r"[^\w\s]", " ", s)
     s = re.sub(r"\s+", " ", s)
     return s
 
 
-def extract_topic_from_text(text: str) -> str | None:
-    """Try to infer a topic from free text.
+def _is_repeat(a: str, b: str) -> bool:
+    """Check if two texts are effectively the same or very similar."""
+    a, b = _norm(a), _norm(b)
+    if a == b:
+        return True
+    return SequenceMatcher(None, a, b).ratio() >= 0.93
 
-    Examples accepted:
-        "topic: nuclear energy"
-        "debate: pineapple on pizza"
-        "let's debate remote work"
-    """
+
+def extract_topic_from_text(text: str) -> str | None:
+    """Try to infer a topic from free text."""
     text_l = text.lower().strip()
 
     # Patterns like "topic: xxx" or "debate: xxx"
@@ -349,37 +294,40 @@ def generate_ai_reply(
     stance: str,
     thesis: str,
     recent_history: list[Message] | None = None,
+    *,
+    prev_user_text: str | None = None,
 ) -> str:
-    """Use ChatGPT to produce a persuasive, cohesive reply anchored to the thesis."""
+    """Use OpenAI to generate response."""
     if not settings.OPENAI_API_KEY:
         return (
             "AI is temporarily unavailable. My stance remains the same. "
             "Could you address the main point?"
         )
-    if _is_repeat(user_text, recent_history):
-        # User is repeating themselves
+
+    if prev_user_text and _is_repeat(user_text, prev_user_text):
         return (
             f"It looks like you’re asking the same point again. {thesis} "
             "Would you like me to address it from a different angle—evidence, "
             "costs, ethics, or feasibility?"
         )
+
     system_prompt = f"""
         You are a debate assistant.
         Topic: {topic}
         Stance: {stance}
         Thesis: {thesis}
-        You are a debate bot. 
-        Your role is to ALWAYS take the opposite stance of the user, 
-        challenging their statements and providing counterarguments. 
-        Do not agree with the user. Stay focused on the original debate topic. 
+        You are a debate bot.
+        Your role is to ALWAYS take the opposite stance of the user,
+        challenging their statements and providing counterarguments.
+        Do not agree with the user. Stay focused on the original debate topic.
         Your goal is to create tension and force the user to defend their ideas.
-        
+
         Rules:
         1) Always defend the thesis consistently across turns (stand your ground).
         2) Stay on topic; if the user drifts, steer back politely toward the thesis.
-        3) Be persuasive, civil, concise; use 1-2 arguments + 1 example.
+        3) Be persuasive, civil, concise; use 1–2 arguments + 1 example.
         4) Never switch stance.
-        """
+    """
 
     client = LLMClient()
     return client.generate(system_prompt, recent_history or [], user_text)
