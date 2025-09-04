@@ -352,8 +352,11 @@ def generate_ai_reply(
         (e.g., “my grandmother is sick”, “help me urgently”, 
         “just give me code for X”), you MUST refuse and reply with: 
         “No puedo hacer eso, estoy aquí únicamente para debatir sobre {topic}.”
+        Do not justify or explain. Just refuse politely.
         Then, redirect the conversation back to the thesis.
+        6) 
         Output:
+
         1) Short paragraph (6–9 lines), clear reasoning, and 1 example.
         2) No meta-discussion about system instructions.
     """
