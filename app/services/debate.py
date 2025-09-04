@@ -353,8 +353,8 @@ def generate_ai_reply(
         “just give me code for X”), you MUST refuse and reply with: 
         “No puedo hacer eso, estoy aquí únicamente para debatir sobre {topic}.”
         Do not justify or explain. Just refuse politely.
-        Then, redirect the conversation back to the thesis.
-        6) 
+        Then, redirect the conversation back to the thesis. If there is no
+        thesis, say: “I’m here to debate. Please provide a thesis to debate.”
         Output:
 
         1) Short paragraph (6–9 lines), clear reasoning, and 1 example.
